@@ -21,6 +21,7 @@ All notable changes to this project are documented here. The project follows
 - CI and the pre-commit example pass `--config ruff.toml`, so a nested `ruff.toml`, `.ruff.toml` or
   `pyproject.toml` can no longer replace the block tier. README adoption steps match.
 - `requirements-dev.txt` pins Ruff's file hashes, and CI installs with `--require-hashes`.
+- `render_register` writes valid TOML for any string, including emoji and DEL.
 
 ## [0.1.0] - 2026-09-30
 

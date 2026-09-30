@@ -81,9 +81,19 @@ def validate_register(rules: list[dict], catalog: dict) -> list[str]:
     return errors
 
 
+def format_string(value: str) -> str:
+    """Return a TOML basic string holding value.
+
+    JSON escapes are valid TOML escapes, but with ensure_ascii JSON writes astral characters as
+    surrogate pairs, which TOML rejects. Without it, JSON still escapes quotes, backslashes and
+    U+0000 to U+001F, leaving only DEL, which TOML also forbids raw.
+    """
+    return json.dumps(value, ensure_ascii=False).replace("\x7f", "\\u007f")
+
+
 def format_key(key: str) -> str:
     """Return a TOML key, quoted when it is not a bare key."""
-    return key if BARE_KEY.match(key) else json.dumps(key)
+    return key if BARE_KEY.match(key) else format_string(key)
 
 
 def format_value(value: object) -> str:
@@ -97,8 +107,7 @@ def format_value(value: object) -> str:
     if isinstance(value, (int, float)):
         return str(value)
     if isinstance(value, str):
-        # JSON string escapes are valid TOML basic-string escapes.
-        return json.dumps(value)
+        return format_string(value)
     if isinstance(value, list):
         items = [format_value(item) for item in value]
         inline = "[" + ", ".join(items) + "]"
