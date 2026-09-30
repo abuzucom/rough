@@ -5328,9 +5328,9 @@ reason = "Block: security."
 [[rule]]
 code = "S104"
 name = "hardcoded-bind-all-interfaces"
-status = "warn"
+status = "block"
 autofix = true
-reason = "Warn: security signal, but a known false-positive magnet (0.004/KLOC)."
+reason = "Block: security; rare in practice (0.004/KLOC)."
 
 [[rule]]
 code = "S105"
@@ -5356,9 +5356,9 @@ reason = "Block: security."
 [[rule]]
 code = "S108"
 name = "hardcoded-temp-file"
-status = "warn"
+status = "block"
 autofix = true
-reason = "Warn: security signal, but a known false-positive magnet (0/KLOC)."
+reason = "Block: security; rare in practice (0/KLOC)."
 
 [[rule]]
 code = "S110"
@@ -5463,7 +5463,7 @@ code = "S311"
 name = "suspicious-non-cryptographic-random-usage"
 status = "warn"
 autofix = true
-reason = "Warn: security signal, but a known false-positive magnet (0.049/KLOC)."
+reason = "Warn: `random` is common in non-security code (0.049/KLOC); review must ensure tokens use `secrets`."
 
 [[rule]]
 code = "S312"
@@ -5734,9 +5734,9 @@ reason = "Block: security."
 [[rule]]
 code = "S606"
 name = "start-process-with-no-shell"
-status = "warn"
+status = "block"
 autofix = true
-reason = "Warn: security signal, but a known false-positive magnet (0.002/KLOC)."
+reason = "Block: security; rare in practice (0.002/KLOC)."
 
 [[rule]]
 code = "S607"
