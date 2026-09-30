@@ -1,5 +1,6 @@
 """Tests for scripts/check_ruff_configs.py."""
 
+import os
 import pathlib
 import shutil
 import subprocess
@@ -68,11 +69,34 @@ class FindStrayConfigsTest(unittest.TestCase):
         self.write(".git/ruff.toml", STRAY_CONFIG)
         self.assertEqual(self.stray(), [])
 
+    def test_ruff_default_excludes_are_skipped(self) -> None:
+        """Ruff never reads configs in its default-excluded folders, at any depth."""
+        self.write(".venv/lib/pkg/pyproject.toml", "[tool.ruff]\n" + STRAY_CONFIG)
+        self.write("web/node_modules/pkg/ruff.toml", STRAY_CONFIG)
+        self.assertEqual(self.stray(), [])
+
+    def test_build_directory_is_checked(self) -> None:
+        """A build folder is not in Ruff's default excludes, so a config there still counts."""
+        self.write("build/ruff.toml", STRAY_CONFIG)
+        self.assertEqual(self.stray(), ["build/ruff.toml"])
+
+    def test_non_table_tool_is_stray(self) -> None:
+        """A pyproject.toml whose tool key is not a table is reported, not a crash."""
+        self.write("pyproject.toml", "tool = 1\n")
+        self.assertEqual(self.stray(), ["pyproject.toml"])
+
     def test_main_exit_codes(self) -> None:
         """The exit code is 0 for a clean tree and 1 once a stray config appears."""
         self.assertEqual(check_ruff_configs.main(["--root", str(self.tmp)]), 0)
         self.write("scripts/ruff.toml", STRAY_CONFIG)
         self.assertEqual(check_ruff_configs.main(["--root", str(self.tmp)]), 1)
+
+    def test_root_defaults_to_current_directory(self) -> None:
+        """Without --root the check scans the working directory, wherever the script lives."""
+        self.write(".ruff.toml", STRAY_CONFIG)
+        self.addCleanup(os.chdir, pathlib.Path.cwd())
+        os.chdir(self.tmp)
+        self.assertEqual(check_ruff_configs.main([]), 1)
 
 
 @unittest.skipUnless(shutil.which("ruff"), "ruff is not installed")

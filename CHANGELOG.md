@@ -8,6 +8,7 @@ All notable changes to this project are documented here. The project follows
 ### Added
 
 - `scripts/check_ruff_configs.py`, run in CI, fails when any Ruff config besides `ruff.toml` exists.
+  It scans the current directory and skips the folders Ruff excludes by default.
 
 ### Changed
 
