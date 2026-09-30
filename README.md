@@ -58,6 +58,7 @@ required because some selected rules are still in preview.
    Without `--config`, Ruff uses the nearest config for each file, so a `ruff.toml`,
    `.ruff.toml` or `pyproject.toml` with `[tool.ruff]` added anywhere in the tree would replace
    the baseline. Copy `scripts/check_ruff_configs.py` too; it fails when such a file exists.
+   Run it from the repo root, which it scans by default wherever the script is kept.
    Add `--ignore-noqa` to the block-tier command to make suppression comments ineffective.
 6. Optionally copy `examples/pre-commit-config.yaml` to `.pre-commit-config.yaml`.
 
@@ -77,6 +78,8 @@ required because some selected rules are still in preview.
    removed or renamed rule, and writes nothing until the register is fixed.
 3. Decide each listed rule in the register, then rebuild.
 4. Update `rev` in `examples/pre-commit-config.yaml` to match.
+5. Compare `SKIPPED_DIRS` in `scripts/check_ruff_configs.py` with the `file_resolver.exclude`
+   list from `ruff check --isolated --show-settings`, and update it if Ruff changed its defaults.
 
 ## What CI enforces in this repo
 
