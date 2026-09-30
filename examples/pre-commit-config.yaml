@@ -1,0 +1,15 @@
+# Example .pre-commit-config.yaml for a repo that adopted this baseline.
+# Keep `rev` equal to the Ruff version pinned in requirements-dev.txt.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      # Block tier: fails the commit. Safe fixes are applied automatically.
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+      # Warn tier: shows findings but never fails the commit.
+      - id: ruff-check
+        name: ruff-check (warn tier)
+        args: [--config, ruff.warn.toml, --exit-zero]
+        verbose: true
