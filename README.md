@@ -13,7 +13,7 @@ repo, then tailor it there.
 | `scripts/build_config.py` | Validates the register and writes both configs. |
 | `scripts/check_fixtures.py` | Proves the configs report exactly what `fixtures/` expects. |
 | `scripts/check_ruff_configs.py` | Fails when any Ruff config besides `ruff.toml` exists. |
-| `requirements-dev.txt` | Pins the Ruff version the register was decided against. |
+| `requirements-dev.txt` | Pins the Ruff version, and its file hashes, the register was decided against. |
 | `examples/pre-commit-config.yaml` | Hooks to copy into an adopting repo. |
 
 ## How the rules were decided
@@ -71,7 +71,8 @@ required because some selected rules are still in preview.
 
 ## Upgrade Ruff
 
-1. Bump the pin in `requirements-dev.txt` and install it.
+1. Bump the pin in `requirements-dev.txt`, replace its `--hash` lines with the new version's
+   SHA-256 digests, and install it with `pip install --require-hashes -r requirements-dev.txt`.
 2. Run `python scripts/build_config.py`. It lists every new rule as `undecided`, and every
    removed or renamed rule, and writes nothing until the register is fixed.
 3. Decide each listed rule in the register, then rebuild.
