@@ -1,0 +1,43 @@
+name: baseline
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned Ruff
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Register and generated configs agree
+        run: python scripts/build_config.py --check
+
+      - name: Unit tests
+        run: python -m unittest -v
+
+      - name: Fixtures report exactly the expected findings
+        run: python scripts/check_fixtures.py
+
+      # --ignore-noqa makes noqa and `ruff: ignore` comments ineffective, so no check can be suppressed.
+      - name: Lint repo code (block rules)
+        run: ruff check --ignore-noqa scripts tests
+
+      - name: Format check
+        run: ruff format --check scripts tests
+
+      - name: Warn-tier report (never fails)
+        run: ruff check --config ruff.warn.toml --ignore-noqa --exit-zero scripts tests
