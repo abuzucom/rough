@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The project follows
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- `scripts/check_ruff_configs.py`, run in CI, fails when any Ruff config besides `ruff.toml` exists.
+
+### Fixed
+
+- CI and the pre-commit example pass `--config ruff.toml`, so a nested `ruff.toml`, `.ruff.toml` or
+  `pyproject.toml` can no longer replace the block tier. README adoption steps match.
+
 ## [0.1.0] - 2026-09-30
 
 ### Added

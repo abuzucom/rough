@@ -12,6 +12,7 @@ repo, then tailor it there.
 | `ruff.warn.toml` | Generated. Warn rules: reported, never fail. Extends `ruff.toml`. |
 | `scripts/build_config.py` | Validates the register and writes both configs. |
 | `scripts/check_fixtures.py` | Proves the configs report exactly what `fixtures/` expects. |
+| `scripts/check_ruff_configs.py` | Fails when any Ruff config besides `ruff.toml` exists. |
 | `requirements-dev.txt` | Pins the Ruff version the register was decided against. |
 | `examples/pre-commit-config.yaml` | Hooks to copy into an adopting repo. |
 
@@ -48,12 +49,16 @@ required because some selected rules are still in preview.
 5. Run it in CI:
 
    ```sh
-   ruff check                                              # block tier, fails the build
-   ruff format --check
+   python scripts/check_ruff_configs.py                    # no other Ruff config exists
+   ruff check --config ruff.toml                           # block tier, fails the build
+   ruff format --config ruff.toml --check
    ruff check --config ruff.warn.toml --exit-zero          # warn tier, report only
    ```
 
-   Add `--ignore-noqa` to the first command to make suppression comments ineffective.
+   Without `--config`, Ruff uses the nearest config for each file, so a `ruff.toml`,
+   `.ruff.toml` or `pyproject.toml` with `[tool.ruff]` added anywhere in the tree would replace
+   the baseline. Copy `scripts/check_ruff_configs.py` too; it fails when such a file exists.
+   Add `--ignore-noqa` to the block-tier command to make suppression comments ineffective.
 6. Optionally copy `examples/pre-commit-config.yaml` to `.pre-commit-config.yaml`.
 
 ## Change a decision here
@@ -77,9 +82,11 @@ required because some selected rules are still in preview.
 `.github/workflows/baseline.yml` runs on every pull request:
 
 - The generated configs match the register (`build_config.py --check`).
+- No Ruff config exists besides `ruff.toml` (`check_ruff_configs.py`).
 - Unit tests pass (`python -m unittest`).
 - Fixtures produce exactly the annotated findings (`check_fixtures.py`).
-- The repo's own code passes the block tier with `--ignore-noqa`, and `ruff format --check`.
+- The repo's own code passes the block tier with `--config ruff.toml --ignore-noqa`, and
+  `ruff format --config ruff.toml --check`.
 - The warn tier is reported but never fails.
 
 ## Ruff fork

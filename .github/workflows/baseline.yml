@@ -32,12 +32,17 @@ jobs:
       - name: Fixtures report exactly the expected findings
         run: python scripts/check_fixtures.py
 
-      # --ignore-noqa makes noqa and `ruff: ignore` comments ineffective, so no check can be suppressed.
+      # Ruff would let a nearer ruff.toml, .ruff.toml or pyproject.toml replace the baseline; reject any.
+      - name: No Ruff config besides ruff.toml
+        run: python scripts/check_ruff_configs.py
+
+      # --config ruff.toml makes Ruff ignore every other config file.
+      # --ignore-noqa makes noqa and `ruff: ignore` comments ineffective.
       - name: Lint repo code (block rules)
-        run: ruff check --ignore-noqa scripts tests
+        run: ruff check --config ruff.toml --ignore-noqa scripts tests
 
       - name: Format check
-        run: ruff format --check scripts tests
+        run: ruff format --config ruff.toml --check scripts tests
 
       - name: Warn-tier report (never fails)
         run: ruff check --config ruff.warn.toml --ignore-noqa --exit-zero scripts tests

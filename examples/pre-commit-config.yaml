@@ -5,9 +5,11 @@ repos:
     rev: v0.16.9
     hooks:
       # Block tier: fails the commit. Safe fixes are applied automatically.
+      # --config ruff.toml stops a nested ruff.toml, .ruff.toml or pyproject.toml from replacing the baseline.
       - id: ruff-check
-        args: [--fix]
+        args: [--fix, --config, ruff.toml]
       - id: ruff-format
+        args: [--config, ruff.toml]
       # Warn tier: shows findings but never fails the commit.
       - id: ruff-check
         name: ruff-check (warn tier)
