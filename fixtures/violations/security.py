@@ -1,6 +1,7 @@
 """Security findings the baseline blocks."""
 
 import hashlib
+import os
 import sqlite3
 import subprocess
 import telnetlib  # expect: suspicious-telnetlib-import
@@ -36,3 +37,26 @@ def open_session(host: str) -> telnetlib.Telnet:
         The session.
     """
     return telnetlib.Telnet(host)  # expect: suspicious-telnet-usage
+
+
+def listen_address() -> str:
+    """Return the address a server binds to.
+
+    Returns:
+        The bind address.
+    """
+    return "0.0.0.0"  # expect: hardcoded-bind-all-interfaces
+
+
+def scratch_path() -> str:
+    """Return a predictable path in the shared temp directory.
+
+    Returns:
+        The path.
+    """
+    return "/tmp/report.txt"  # expect: hardcoded-temp-file
+
+
+def replace_process(program: str) -> None:
+    """Replace this process with another program."""
+    os.execv(program, [program])  # expect: start-process-with-no-shell

@@ -19,7 +19,7 @@ repo, then tailor it there.
 ## How the rules were decided
 
 Every one of the 952 selectable rules in Ruff 0.16.9 has a decision in the register:
-440 block, 194 warn, 318 off.
+443 block, 191 warn, 318 off.
 
 - **Block** a rule when it catches real bugs, flags a security problem, or is hygiene that
   `ruff check --fix` resolves safely and that fires less than once per 1,000 lines.

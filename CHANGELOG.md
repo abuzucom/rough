@@ -9,6 +9,13 @@ All notable changes to this project are documented here. The project follows
 
 - `scripts/check_ruff_configs.py`, run in CI, fails when any Ruff config besides `ruff.toml` exists.
 
+### Changed
+
+- `hardcoded-bind-all-interfaces` (S104), `hardcoded-temp-file` (S108) and
+  `start-process-with-no-shell` (S606) now block: each fires far less than once per 1,000 lines.
+  The register is 443 block, 191 warn, 318 off.
+- `suspicious-non-cryptographic-random-usage` (S311) stays warn, with a reason that states why.
+
 ### Fixed
 
 - CI and the pre-commit example pass `--config ruff.toml`, so a nested `ruff.toml`, `.ruff.toml` or
