@@ -42,7 +42,10 @@ required because some selected rules are still in preview.
 ## Adopt in a repo
 
 1. Copy `ruff.toml` and `ruff.warn.toml` to the repo root.
-2. Pin the same Ruff version: `ruff==0.16.9` in the repo's dev requirements.
+2. Pin the same Ruff version with its hashes: copy the `ruff==0.16.9` line and every `--hash`
+   line from `requirements-dev.txt` into the repo's dev requirements, and install with
+   `pip install --require-hashes -r <file>`. Hash checking needs a hash for every requirement in
+   the file, so keep Ruff in a file of its own if the others are not hashed.
 3. Set `target-version` to the repo's minimum Python.
 4. Tailor in place: move a rule between the two files' `select` lists, or delete it to turn it
    off. Adjust `per-file-ignores` for the repo's layout.

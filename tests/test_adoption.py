@@ -54,6 +54,11 @@ class AdoptionDocsTest(unittest.TestCase):
                 self.assertEqual(len(args), 1, hook)
                 self.assertIn("--ignore-noqa", args[0])
 
+    def test_adoption_steps_keep_hash_pins(self) -> None:
+        """The adoption steps install Ruff with hash checking, as this repo's CI does."""
+        section = read_text(README).split("## Adopt in a repo", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("--require-hashes", section)
+
     def test_pre_commit_rev_is_frozen_to_pinned_version(self) -> None:
         """The hook rev is a commit SHA, frozen at the Ruff version requirements-dev.txt pins."""
         pinned = re.search(r"^ruff==(\S+)", read_text(REPO_ROOT / "requirements-dev.txt"), re.MULTILINE)
