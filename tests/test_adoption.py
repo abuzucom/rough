@@ -55,11 +55,12 @@ class AdoptionDocsTest(unittest.TestCase):
                 self.assertIn("--ignore-noqa", args[0])
 
     def test_block_tier_commands_lint_ignored_files(self) -> None:
-        """The README and CI block-tier commands lint files that .gitignore or .ignore list."""
+        """The README and CI block-tier and format commands check files .gitignore or .ignore list."""
         workflow = read_text(REPO_ROOT / ".github" / "workflows" / "baseline.yml")
         lines = read_text(README).splitlines() + workflow.splitlines()
-        commands = [line for line in lines if "ruff check --config ruff.toml" in line]
-        self.assertEqual(len(commands), 2, commands)
+        prefixes = ("ruff check --config ruff.toml", "ruff format --config ruff.toml")
+        commands = [line for line in lines if any(prefix in line for prefix in prefixes)]
+        self.assertEqual(len(commands), 5, commands)
         for command in commands:
             with self.subTest(command=command.strip()):
                 self.assertIn("--no-respect-gitignore", command)
@@ -111,6 +112,15 @@ class IgnoreNoqaTest(unittest.TestCase):
         )
         return {d["name"] for d in json.loads(result.stdout)}
 
+    def format_check(self, *options: str) -> int:
+        """Run `ruff format --check` in the temp dir with the given options.
+
+        Returns:
+            Ruff's exit code: 0 when every checked file is formatted, 1 when one is not.
+        """
+        command = ["ruff", "format", "--no-cache", "--config", "ruff.toml", "--check", *options]
+        return subprocess.run(command, cwd=self.tmp, capture_output=True, check=False).returncode
+
     def test_comment_hides_finding_without_flag(self) -> None:
         """Without --ignore-noqa the suppression comment hides the finding."""
         self.assertEqual(self.run_ruff(), set())
@@ -121,6 +131,13 @@ class IgnoreNoqaTest(unittest.TestCase):
         (self.tmp / ".ignore").write_text("sample.py\n", encoding="utf-8")
         self.assertEqual(self.run_ruff("."), set())
         self.assertEqual(self.run_ruff("--no-respect-gitignore", "."), {"unused-import"})
+
+    def test_no_respect_gitignore_format_checks_ignored_file(self) -> None:
+        """A file listed in .ignore skips a directory format check unless --no-respect-gitignore is set."""
+        (self.tmp / "sample.py").write_text("x  =  1\n", encoding="utf-8")
+        (self.tmp / ".ignore").write_text("sample.py\n", encoding="utf-8")
+        self.assertEqual(self.format_check("."), 0)
+        self.assertEqual(self.format_check("--no-respect-gitignore", "."), 1)
 
     def test_flag_reports_suppressed_finding(self) -> None:
         """With --ignore-noqa the finding is reported despite the comment."""
