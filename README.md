@@ -50,16 +50,17 @@ required because some selected rules are still in preview.
 
    ```sh
    python scripts/check_ruff_configs.py                    # no other Ruff config exists
-   ruff check --config ruff.toml                           # block tier, fails the build
+   ruff check --config ruff.toml --ignore-noqa             # block tier, fails the build
    ruff format --config ruff.toml --check
-   ruff check --config ruff.warn.toml --exit-zero          # warn tier, report only
+   ruff check --config ruff.warn.toml --ignore-noqa --exit-zero   # warn tier, report only
    ```
 
    Without `--config`, Ruff uses the nearest config for each file, so a `ruff.toml`,
    `.ruff.toml` or `pyproject.toml` with `[tool.ruff]` added anywhere in the tree would replace
    the baseline. Copy `scripts/check_ruff_configs.py` too; it fails when such a file exists.
    Run it from the repo root, which it scans by default wherever the script is kept.
-   Add `--ignore-noqa` to the block-tier command to make suppression comments ineffective.
+   `--ignore-noqa` makes `noqa`, `ruff: ignore`, `ruff: file-ignore` and `ruff: disable` comments
+   ineffective, so no comment can hide a block-tier finding.
 6. Optionally copy `examples/pre-commit-config.yaml` to `.pre-commit-config.yaml`.
 
 ## Change a decision here
