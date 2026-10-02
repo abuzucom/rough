@@ -36,6 +36,21 @@ REGISTER_HEADER = (
 )
 BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
 INLINE_LIST_LIMIT = 100
+# Settings keys that would change which rules run on which files, overriding the register.
+BANNED_TOP_LEVEL_KEYS = ("extend", "include", "extend-include", "exclude", "extend-exclude")
+BANNED_LINT_KEYS = (
+    "select",
+    "extend-select",
+    "ignore",
+    "extend-ignore",
+    "fixable",
+    "extend-fixable",
+    "unfixable",
+    "extend-safe-fixes",
+    "extend-unsafe-fixes",
+    "extend-per-file-ignores",
+    "exclude",
+)
 
 
 def load_catalog(ruff: str) -> dict:
@@ -78,6 +93,37 @@ def validate_register(rules: list[dict], catalog: dict) -> list[str]:
         seen.add(code)
         errors.extend(validate_rule(rule, catalog))
     errors.extend(f"{code}: undecided; add it to the register" for code in sorted(set(catalog) - seen))
+    return errors
+
+
+def validate_per_file_ignores(ignores: dict, rules: list[dict], catalog: dict) -> list[str]:
+    """Return the per-file-ignores selectors that are not warn or off rule names.
+
+    Codes, prefixes and ALL are rejected so every ignored rule is named and decided. Block rules
+    are rejected because a block decision must hold for every file.
+    """
+    known = {entry["name"] for entry in catalog.values()}
+    block = set(names_with(rules, ("block",)))
+    errors = []
+    for pattern, selectors in ignores.items():
+        for selector in selectors:
+            if selector not in known:
+                errors.append(f"settings: per-file-ignores {pattern!r}: {selector!r} is not a rule name")
+            elif selector in block:
+                errors.append(f"settings: per-file-ignores {pattern!r}: {selector} is a block rule")
+    return errors
+
+
+def validate_settings(settings: dict, rules: list[dict], catalog: dict) -> list[str]:
+    """Return every setting that would override the register's rule decisions."""
+    lint = settings.get("lint", {})
+    errors = [
+        f"settings: {key} is not allowed; decide rules in [[rule]]" for key in BANNED_TOP_LEVEL_KEYS if key in settings
+    ]
+    errors.extend(
+        f"settings: lint.{key} is not allowed; decide rules in [[rule]]" for key in BANNED_LINT_KEYS if key in lint
+    )
+    errors.extend(validate_per_file_ignores(lint.get("per-file-ignores", {}), rules, catalog))
     return errors
 
 
@@ -211,18 +257,22 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(sys.argv[1:] if argv is None else argv)
     register = tomllib.loads((args.root / REGISTER_FILE).read_text(encoding="utf-8"))
     rules = register.get("rule", [])
+    settings = register.get("settings", {})
     if args.catalog:
         catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
     else:
         catalog = load_catalog(args.ruff)
     errors = validate_register(rules, catalog)
+    # Rules are only well-formed enough to check settings against once the register validates.
+    if not errors:
+        errors = validate_settings(settings, rules, catalog)
     for error in errors:
         print(error, file=sys.stderr)
     if errors:
         print(f"{len(errors)} problem(s) in {REGISTER_FILE}; nothing written.", file=sys.stderr)
         return 1
     outputs = {
-        BLOCK_FILE: render_block_config(register.get("settings", {}), rules),
+        BLOCK_FILE: render_block_config(settings, rules),
         WARN_FILE: render_warn_config(rules),
     }
     if args.check:
