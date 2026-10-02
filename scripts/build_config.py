@@ -39,12 +39,31 @@ INLINE_LIST_LIMIT = 100
 # The only register settings allowed; None accepts any value. An allowlist, not a denylist, since
 # Ruff has many keys that change which rules run on which files, including deprecated top-level
 # aliases (ignore, per-file-ignores) it still applies, and plugin options that can silence a rule.
-# Add a key here only after checking it cannot override a [[rule]] decision.
+# Values are not checked: thresholds, target-version and the docstring convention still tune when a
+# selected rule fires. Add a key here only after checking it cannot select, ignore or exclude rules
+# or files.
+PYLINT_OPTIONS = (
+    "max-args",
+    "max-positional-args",
+    "max-statements",
+    "max-locals",
+    "max-nested-blocks",
+    "max-branches",
+    "max-returns",
+    "max-bool-expr",
+    "max-public-methods",
+    "max-statements-in-try",
+)
 ALLOWED_SETTINGS = {
     "line-length": None,
     "target-version": None,
     "preview": None,
-    "lint": {"per-file-ignores": None, "pydocstyle": None, "mccabe": None, "pylint": None},
+    "lint": {
+        "per-file-ignores": None,
+        "pydocstyle": {"convention": None},
+        "mccabe": {"max-complexity": None},
+        "pylint": dict.fromkeys(PYLINT_OPTIONS),
+    },
     "format": {"quote-style": None, "line-ending": None},
 }
 

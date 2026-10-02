@@ -95,7 +95,9 @@ required because some selected rules are still in preview.
 
 - The generated configs match the register (`build_config.py --check`).
 - Register settings use only the keys in `ALLOWED_SETTINGS` in `build_config.py`, and
-  `per-file-ignores` names only warn or off rules, so only `[[rule]]` entries decide what runs.
+  `per-file-ignores` names only warn or off rules, so no setting can select, ignore or exclude a
+  rule or file. Settings still tune when a selected rule fires (`line-length`, the pylint and
+  mccabe limits, `target-version`, the docstring convention), so review changes to them like code.
 - The adoption steps and pre-commit example pass `--ignore-noqa`, the block-tier commands pass
   `--no-respect-gitignore`, Ruff installs with `--require-hashes`, and the hook `rev` is pinned to a
   commit (`tests/test_adoption.py`).

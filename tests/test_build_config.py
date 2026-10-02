@@ -182,6 +182,16 @@ class ValidateSettingsTest(unittest.TestCase):
                 errors = self.errors_for(settings)
                 self.assertTrue(any(f"settings: {path} " in e and "not allowed" in e for e in errors), errors)
 
+    def test_unknown_option_in_allowed_table_is_reported(self) -> None:
+        """An allowed table accepts only its listed options, not any key Ruff supports."""
+        for table in ("pylint", "mccabe", "pydocstyle"):
+            with self.subTest(table=table):
+                settings = copy.deepcopy(SETTINGS)
+                settings["lint"].setdefault(table, {})["future-option"] = True
+                errors = self.errors_for(settings)
+                path = f"settings: lint.{table}.future-option "
+                self.assertTrue(any(path in e and "not allowed" in e for e in errors), errors)
+
     def test_unknown_key_is_reported(self) -> None:
         """A key outside the allowlist fails even when it is not a known bypass."""
         settings = copy.deepcopy(SETTINGS)

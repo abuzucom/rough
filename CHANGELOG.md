@@ -28,9 +28,11 @@ All notable changes to this project are documented here. The project follows
 - `requirements-dev.txt` pins Ruff's file hashes, and CI installs with `--require-hashes`.
 - `render_register` writes valid TOML for any string, including emoji and DEL.
 - `build_config.py` accepts only the register settings keys in `ALLOWED_SETTINGS`, so no setting
-  can override a rule decision. This covers Ruff's deprecated top-level `ignore` and
-  `per-file-ignores` aliases, `fix`, `format.exclude` and plugin options. `per-file-ignores` may
-  name only warn or off rules.
+  can select, ignore or exclude a rule or file. This covers Ruff's deprecated top-level `ignore`
+  and `per-file-ignores` aliases, `fix`, `format.exclude` and plugin options. `per-file-ignores`
+  may name only warn or off rules.
+- The `lint.pylint`, `lint.mccabe` and `lint.pydocstyle` settings tables accept only the options
+  the register uses, instead of any option Ruff supports.
 - A `.gitignore`, `.ignore` or `.git/info/exclude` entry can no longer hide a tracked file from the
   block tier: CI and the README's block-tier command pass `--no-respect-gitignore`.
 - `build_config.py` quotes a TOML key ending in a newline instead of writing invalid TOML.
