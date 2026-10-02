@@ -6,12 +6,13 @@ repos:
     hooks:
       # Block tier: fails the commit. Safe fixes are applied automatically.
       # --config ruff.toml stops a nested ruff.toml, .ruff.toml or pyproject.toml from replacing the baseline.
+      # --ignore-noqa stops suppression comments from hiding a finding.
       - id: ruff-check
-        args: [--fix, --config, ruff.toml]
+        args: [--fix, --config, ruff.toml, --ignore-noqa]
       - id: ruff-format
         args: [--config, ruff.toml]
       # Warn tier: shows findings but never fails the commit.
       - id: ruff-check
         name: ruff-check (warn tier)
-        args: [--config, ruff.warn.toml, --exit-zero]
+        args: [--config, ruff.warn.toml, --ignore-noqa, --exit-zero]
         verbose: true
