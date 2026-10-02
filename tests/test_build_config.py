@@ -235,6 +235,13 @@ class RenderRegisterTest(unittest.TestCase):
         self.assertEqual(reasons["F401"], reason)
         self.assertEqual(register["settings"], settings)
 
+    def test_key_with_trailing_newline_round_trips(self) -> None:
+        """A key that is bare except for a trailing newline is quoted, not written raw."""
+        settings = copy.deepcopy(SETTINGS)
+        settings["lint"]["per-file-ignores"]["tests\n"] = ["line-too-long"]
+        register = tomllib.loads(build_config.render_register(settings, make_rules()))
+        self.assertEqual(register["settings"], settings)
+
 
 class CheckModeTest(unittest.TestCase):
     """main --check detects generated files that drifted from the register."""
