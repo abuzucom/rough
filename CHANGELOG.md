@@ -16,6 +16,10 @@ All notable changes to this project are documented here. The project follows
   `start-process-with-no-shell` (S606) now block: each fires far less than once per 1,000 lines.
   The register is 443 block, 191 warn, 318 off.
 - `suspicious-non-cryptographic-random-usage` (S311) stays warn, with a reason that states why.
+- The README's adoption commands and the pre-commit example pass `--ignore-noqa` to both tiers,
+  matching CI.
+- The pre-commit example pins `ruff-pre-commit` to the v0.16.9 commit instead of the tag.
+- The CI job times out after 10 minutes.
 
 ### Fixed
 
@@ -23,6 +27,13 @@ All notable changes to this project are documented here. The project follows
   `pyproject.toml` can no longer replace the block tier. README adoption steps match.
 - `requirements-dev.txt` pins Ruff's file hashes, and CI installs with `--require-hashes`.
 - `render_register` writes valid TOML for any string, including emoji and DEL.
+- `build_config.py` rejects register settings that would override a rule decision: `extend`,
+  `include`/`exclude` keys, `lint.select`/`ignore`/`fixable` and their variants, and
+  `per-file-ignores` entries that are not warn or off rule names.
+- `build_config.py` quotes a TOML key ending in a newline instead of writing invalid TOML.
+- A `ruff: ignore[...]` comment can no longer hide a block finding in a repo that follows the
+  adoption steps.
+- Adoption step 2 keeps Ruff's hash pins and installs with `--require-hashes`.
 
 ## [0.1.0] - 2026-09-30
 

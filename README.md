@@ -92,6 +92,10 @@ required because some selected rules are still in preview.
 `.github/workflows/baseline.yml` runs on every pull request:
 
 - The generated configs match the register (`build_config.py --check`).
+- Register settings cannot select, ignore, extend or exclude rules or files, and `per-file-ignores`
+  names only warn or off rules, so only `[[rule]]` entries decide what runs (`build_config.py`).
+- The adoption steps and pre-commit example pass `--ignore-noqa`, install Ruff with
+  `--require-hashes`, and pin the hook `rev` to a commit (`tests/test_adoption.py`).
 - No Ruff config exists besides `ruff.toml` (`check_ruff_configs.py`).
 - Unit tests pass (`python -m unittest`).
 - Fixtures produce exactly the annotated findings (`check_fixtures.py`).
