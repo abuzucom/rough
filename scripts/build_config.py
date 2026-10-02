@@ -34,7 +34,7 @@ REGISTER_HEADER = (
     "# autofix = false keeps `ruff check --fix` away from the rule.\n"
     "# After editing, run: python scripts/build_config.py\n"
 )
-BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
+BARE_KEY = re.compile(r"[A-Za-z0-9_-]+")
 INLINE_LIST_LIMIT = 100
 # Settings keys that would change which rules run on which files, overriding the register.
 BANNED_TOP_LEVEL_KEYS = ("extend", "include", "extend-include", "exclude", "extend-exclude")
@@ -139,7 +139,8 @@ def format_string(value: str) -> str:
 
 def format_key(key: str) -> str:
     """Return a TOML key, quoted when it is not a bare key."""
-    return key if BARE_KEY.match(key) else format_string(key)
+    # fullmatch, since `$` would also match before a trailing newline.
+    return key if BARE_KEY.fullmatch(key) else format_string(key)
 
 
 def format_value(value: object) -> str:
