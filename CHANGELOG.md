@@ -27,9 +27,12 @@ All notable changes to this project are documented here. The project follows
   `pyproject.toml` can no longer replace the block tier. README adoption steps match.
 - `requirements-dev.txt` pins Ruff's file hashes, and CI installs with `--require-hashes`.
 - `render_register` writes valid TOML for any string, including emoji and DEL.
-- `build_config.py` rejects register settings that would override a rule decision: `extend`,
-  `include`/`exclude` keys, `lint.select`/`ignore`/`fixable` and their variants, and
-  `per-file-ignores` entries that are not warn or off rule names.
+- `build_config.py` accepts only the register settings keys in `ALLOWED_SETTINGS`, so no setting
+  can override a rule decision. This covers Ruff's deprecated top-level `ignore` and
+  `per-file-ignores` aliases, `fix`, `format.exclude` and plugin options. `per-file-ignores` may
+  name only warn or off rules.
+- A `.gitignore`, `.ignore` or `.git/info/exclude` entry can no longer hide a tracked file from the
+  block tier: CI and the README's block-tier command pass `--no-respect-gitignore`.
 - `build_config.py` quotes a TOML key ending in a newline instead of writing invalid TOML.
 - A `ruff: ignore[...]` comment can no longer hide a block finding in a repo that follows the
   adoption steps.

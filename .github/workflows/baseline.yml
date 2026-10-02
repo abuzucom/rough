@@ -39,8 +39,9 @@ jobs:
 
       # --config ruff.toml makes Ruff ignore every other config file.
       # --ignore-noqa makes noqa and `ruff: ignore` comments ineffective.
+      # --no-respect-gitignore lints files .gitignore or .ignore list, even tracked ones.
       - name: Lint repo code (block rules)
-        run: ruff check --config ruff.toml --ignore-noqa scripts tests
+        run: ruff check --config ruff.toml --ignore-noqa --no-respect-gitignore scripts tests
 
       - name: Format check
         run: ruff format --config ruff.toml --check scripts tests

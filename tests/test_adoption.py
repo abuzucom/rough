@@ -54,6 +54,16 @@ class AdoptionDocsTest(unittest.TestCase):
                 self.assertEqual(len(args), 1, hook)
                 self.assertIn("--ignore-noqa", args[0])
 
+    def test_block_tier_commands_lint_ignored_files(self) -> None:
+        """The README and CI block-tier commands lint files that .gitignore or .ignore list."""
+        workflow = read_text(REPO_ROOT / ".github" / "workflows" / "baseline.yml")
+        lines = read_text(README).splitlines() + workflow.splitlines()
+        commands = [line for line in lines if "ruff check --config ruff.toml" in line]
+        self.assertEqual(len(commands), 2, commands)
+        for command in commands:
+            with self.subTest(command=command.strip()):
+                self.assertIn("--no-respect-gitignore", command)
+
     def test_adoption_steps_keep_hash_pins(self) -> None:
         """The adoption steps install Ruff with hash checking, as this repo's CI does."""
         section = read_text(README).split("## Adopt in a repo", 1)[1].split("\n## ", 1)[0]
@@ -71,7 +81,7 @@ class AdoptionDocsTest(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("ruff"), "ruff is not installed")
 class IgnoreNoqaTest(unittest.TestCase):
-    """--ignore-noqa reports findings that a `ruff: ignore` comment would hide."""
+    """The flags the adoption commands rely on report findings Ruff would otherwise hide."""
 
     def setUp(self) -> None:
         """Create a config selecting unused-import and a file suppressing its one hit."""
@@ -104,6 +114,13 @@ class IgnoreNoqaTest(unittest.TestCase):
     def test_comment_hides_finding_without_flag(self) -> None:
         """Without --ignore-noqa the suppression comment hides the finding."""
         self.assertEqual(self.run_ruff(), set())
+
+    def test_no_respect_gitignore_reports_ignored_file(self) -> None:
+        """A file listed in .ignore is skipped in a directory lint unless --no-respect-gitignore is set."""
+        (self.tmp / "sample.py").write_text("import os\n", encoding="utf-8")
+        (self.tmp / ".ignore").write_text("sample.py\n", encoding="utf-8")
+        self.assertEqual(self.run_ruff("."), set())
+        self.assertEqual(self.run_ruff("--no-respect-gitignore", "."), {"unused-import"})
 
     def test_flag_reports_suppressed_finding(self) -> None:
         """With --ignore-noqa the finding is reported despite the comment."""

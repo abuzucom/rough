@@ -53,7 +53,7 @@ required because some selected rules are still in preview.
 
    ```sh
    python scripts/check_ruff_configs.py                    # no other Ruff config exists
-   ruff check --config ruff.toml --ignore-noqa             # block tier, fails the build
+   ruff check --config ruff.toml --ignore-noqa --no-respect-gitignore   # block tier, fails the build
    ruff format --config ruff.toml --check
    ruff check --config ruff.warn.toml --ignore-noqa --exit-zero   # warn tier, report only
    ```
@@ -63,7 +63,9 @@ required because some selected rules are still in preview.
    the baseline. Copy `scripts/check_ruff_configs.py` too; it fails when such a file exists.
    Run it from the repo root, which it scans by default wherever the script is kept.
    `--ignore-noqa` makes `noqa`, `ruff: ignore`, `ruff: file-ignore` and `ruff: disable` comments
-   ineffective, so no comment can hide a block-tier finding.
+   ineffective, so no comment can hide a block-tier finding. `--no-respect-gitignore` lints files
+   that `.gitignore`, `.ignore` or `.git/info/exclude` list, so an ignore entry cannot hide a
+   tracked file either. Ruff's default excludes, such as `.venv`, still apply.
 6. Optionally copy `examples/pre-commit-config.yaml` to `.pre-commit-config.yaml`.
 
 ## Change a decision here
@@ -92,14 +94,16 @@ required because some selected rules are still in preview.
 `.github/workflows/baseline.yml` runs on every pull request:
 
 - The generated configs match the register (`build_config.py --check`).
-- Register settings cannot select, ignore, extend or exclude rules or files, and `per-file-ignores`
-  names only warn or off rules, so only `[[rule]]` entries decide what runs (`build_config.py`).
-- The adoption steps and pre-commit example pass `--ignore-noqa`, install Ruff with
-  `--require-hashes`, and pin the hook `rev` to a commit (`tests/test_adoption.py`).
+- Register settings use only the keys in `ALLOWED_SETTINGS` in `build_config.py`, and
+  `per-file-ignores` names only warn or off rules, so only `[[rule]]` entries decide what runs.
+- The adoption steps and pre-commit example pass `--ignore-noqa`, the block-tier commands pass
+  `--no-respect-gitignore`, Ruff installs with `--require-hashes`, and the hook `rev` is pinned to a
+  commit (`tests/test_adoption.py`).
 - No Ruff config exists besides `ruff.toml` (`check_ruff_configs.py`).
 - Unit tests pass (`python -m unittest`).
 - Fixtures produce exactly the annotated findings (`check_fixtures.py`).
-- The repo's own code passes the block tier with `--config ruff.toml --ignore-noqa`, and
+- The repo's own code passes the block tier with
+  `--config ruff.toml --ignore-noqa --no-respect-gitignore`, and
   `ruff format --config ruff.toml --check`.
 - The warn tier is reported but never fails.
 
