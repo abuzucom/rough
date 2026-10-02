@@ -54,6 +54,15 @@ class AdoptionDocsTest(unittest.TestCase):
                 self.assertEqual(len(args), 1, hook)
                 self.assertIn("--ignore-noqa", args[0])
 
+    def test_pre_commit_rev_is_frozen_to_pinned_version(self) -> None:
+        """The hook rev is a commit SHA, frozen at the Ruff version requirements-dev.txt pins."""
+        pinned = re.search(r"^ruff==(\S+)", read_text(REPO_ROOT / "requirements-dev.txt"), re.MULTILINE)
+        self.assertIsNotNone(pinned, "requirements-dev.txt does not pin ruff")
+        rev = re.search(r"^\s*rev: (\S+)\s+# frozen: v(\S+)$", read_text(PRE_COMMIT_EXAMPLE), re.MULTILINE)
+        self.assertIsNotNone(rev, "pre-commit rev has no `# frozen: v<version>` comment")
+        self.assertRegex(rev[1], r"^[0-9a-f]{40}$")
+        self.assertEqual(rev[2], pinned[1])
+
 
 @unittest.skipUnless(shutil.which("ruff"), "ruff is not installed")
 class IgnoreNoqaTest(unittest.TestCase):

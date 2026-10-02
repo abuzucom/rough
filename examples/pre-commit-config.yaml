@@ -1,8 +1,9 @@
 # Example .pre-commit-config.yaml for a repo that adopted this baseline.
-# Keep `rev` equal to the Ruff version pinned in requirements-dev.txt.
+# `rev` is the commit of the tag for the Ruff version pinned in requirements-dev.txt, since a tag can
+# move. Find it with: git ls-remote https://github.com/astral-sh/ruff-pre-commit v<version>
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.9
+    rev: a56c0b927e6465d37cae3e97d35d4d18ab2b96cd  # frozen: v0.16.9
     hooks:
       # Block tier: fails the commit. Safe fixes are applied automatically.
       # --config ruff.toml stops a nested ruff.toml, .ruff.toml or pyproject.toml from replacing the baseline.

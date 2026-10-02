@@ -78,7 +78,9 @@ required because some selected rules are still in preview.
 2. Run `python scripts/build_config.py`. It lists every new rule as `undecided`, and every
    removed or renamed rule, and writes nothing until the register is fixed.
 3. Decide each listed rule in the register, then rebuild.
-4. Update `rev` in `examples/pre-commit-config.yaml` to match.
+4. Set `rev` in `examples/pre-commit-config.yaml` to the commit of the matching
+   `ruff-pre-commit` tag, with a `# frozen: v<version>` comment. Find the commit with
+   `git ls-remote https://github.com/astral-sh/ruff-pre-commit v<version>`.
 5. Compare `SKIPPED_DIRS` in `scripts/check_ruff_configs.py` with the `file_resolver.exclude`
    list from `ruff check --isolated --show-settings`, and update it if Ruff changed its defaults.
 
