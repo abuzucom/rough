@@ -44,7 +44,7 @@ jobs:
         run: ruff check --config ruff.toml --ignore-noqa --no-respect-gitignore scripts tests
 
       - name: Format check
-        run: ruff format --config ruff.toml --check scripts tests
+        run: ruff format --config ruff.toml --check --no-respect-gitignore scripts tests
 
       - name: Warn-tier report (never fails)
         run: ruff check --config ruff.warn.toml --ignore-noqa --exit-zero scripts tests

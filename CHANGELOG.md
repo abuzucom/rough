@@ -34,7 +34,8 @@ All notable changes to this project are documented here. The project follows
 - The `lint.pylint`, `lint.mccabe` and `lint.pydocstyle` settings tables accept only the options
   the register uses, instead of any option Ruff supports.
 - A `.gitignore`, `.ignore` or `.git/info/exclude` entry can no longer hide a tracked file from the
-  block tier: CI and the README's block-tier command pass `--no-respect-gitignore`.
+  block tier or the format check: CI and the README's block-tier and format commands pass
+  `--no-respect-gitignore`.
 - `build_config.py` quotes a TOML key ending in a newline instead of writing invalid TOML.
 - A `ruff: ignore[...]` comment can no longer hide a block finding in a repo that follows the
   adoption steps.
