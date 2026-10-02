@@ -36,21 +36,17 @@ REGISTER_HEADER = (
 )
 BARE_KEY = re.compile(r"[A-Za-z0-9_-]+")
 INLINE_LIST_LIMIT = 100
-# Settings keys that would change which rules run on which files, overriding the register.
-BANNED_TOP_LEVEL_KEYS = ("extend", "include", "extend-include", "exclude", "extend-exclude")
-BANNED_LINT_KEYS = (
-    "select",
-    "extend-select",
-    "ignore",
-    "extend-ignore",
-    "fixable",
-    "extend-fixable",
-    "unfixable",
-    "extend-safe-fixes",
-    "extend-unsafe-fixes",
-    "extend-per-file-ignores",
-    "exclude",
-)
+# The only register settings allowed; None accepts any value. An allowlist, not a denylist, since
+# Ruff has many keys that change which rules run on which files, including deprecated top-level
+# aliases (ignore, per-file-ignores) it still applies, and plugin options that can silence a rule.
+# Add a key here only after checking it cannot override a [[rule]] decision.
+ALLOWED_SETTINGS = {
+    "line-length": None,
+    "target-version": None,
+    "preview": None,
+    "lint": {"per-file-ignores": None, "pydocstyle": None, "mccabe": None, "pylint": None},
+    "format": {"quote-style": None, "line-ending": None},
+}
 
 
 def load_catalog(ruff: str) -> dict:
@@ -114,17 +110,33 @@ def validate_per_file_ignores(ignores: dict, rules: list[dict], catalog: dict) -
     return errors
 
 
+def find_disallowed_keys(table: dict, allowed: dict, prefix: str = "") -> list[str]:
+    """Return the dotted path of every key in table that the allowed schema does not list.
+
+    Recursion is bounded by the depth of the allowed schema, not of the table.
+    """
+    paths = []
+    for key, value in table.items():
+        path = prefix + key
+        if key not in allowed:
+            paths.append(path)
+        elif isinstance(allowed[key], dict):
+            if isinstance(value, dict):
+                paths.extend(find_disallowed_keys(value, allowed[key], path + "."))
+            else:
+                paths.append(path)
+    return paths
+
+
 def validate_settings(settings: dict, rules: list[dict], catalog: dict) -> list[str]:
-    """Return every setting that would override the register's rule decisions."""
-    lint = settings.get("lint", {})
+    """Return every setting that could override the register's rule decisions."""
     errors = [
-        f"settings: {key} is not allowed; decide rules in [[rule]]" for key in BANNED_TOP_LEVEL_KEYS if key in settings
+        f"settings: {path} is not allowed; decide rules in [[rule]] (allowed keys: ALLOWED_SETTINGS)"
+        for path in find_disallowed_keys(settings, ALLOWED_SETTINGS)
     ]
-    errors.extend(
-        f"settings: lint.{key} is not allowed; decide rules in [[rule]]" for key in BANNED_LINT_KEYS if key in lint
-    )
-    errors.extend(validate_per_file_ignores(lint.get("per-file-ignores", {}), rules, catalog))
-    return errors
+    if errors:
+        return errors
+    return validate_per_file_ignores(settings.get("lint", {}).get("per-file-ignores", {}), rules, catalog)
 
 
 def format_string(value: str) -> str:

@@ -45,6 +45,39 @@ SETTINGS = {
 }
 
 
+# Settings keys that Ruff 0.16.9 accepts and that would override a register decision. Top-level
+# select, ignore and per-file-ignores are deprecated aliases Ruff still applies.
+BYPASS_KEYS = (
+    "extend",
+    "include",
+    "extend-include",
+    "exclude",
+    "extend-exclude",
+    "fix",
+    "unsafe-fixes",
+    "builtins",
+    "select",
+    "extend-select",
+    "ignore",
+    "extend-ignore",
+    "per-file-ignores",
+    "extend-per-file-ignores",
+    "lint.select",
+    "lint.extend-select",
+    "lint.ignore",
+    "lint.extend-ignore",
+    "lint.fixable",
+    "lint.extend-fixable",
+    "lint.unfixable",
+    "lint.extend-safe-fixes",
+    "lint.extend-unsafe-fixes",
+    "lint.extend-per-file-ignores",
+    "lint.exclude",
+    "lint.flake8-bandit",
+    "format.exclude",
+)
+
+
 def make_rules() -> list[dict]:
     """Return a valid register covering every status and the no-autofix flag."""
     return [
@@ -136,28 +169,25 @@ class ValidateSettingsTest(unittest.TestCase):
         """Settings that only tune rules validate cleanly."""
         self.assertEqual(self.errors_for(SETTINGS), [])
 
-    def test_top_level_selection_keys_are_reported(self) -> None:
-        """Top-level keys that extend another config or change the file set are rejected."""
-        for key in build_config.BANNED_TOP_LEVEL_KEYS:
-            with self.subTest(key=key):
+    def test_known_bypass_keys_are_reported(self) -> None:
+        """Every key shown to select, ignore, fix or exclude outside the register is rejected."""
+        for path in BYPASS_KEYS:
+            with self.subTest(key=path):
                 settings = copy.deepcopy(SETTINGS)
-                settings[key] = ["src"]
+                *tables, key = path.split(".")
+                target = settings
+                for table in tables:
+                    target = target.setdefault(table, {})
+                target[key] = ["S602"]
                 errors = self.errors_for(settings)
-                self.assertTrue(any(key in e and "not allowed" in e for e in errors), errors)
+                self.assertTrue(any(f"settings: {path} " in e and "not allowed" in e for e in errors), errors)
 
-    def test_lint_selection_keys_are_reported(self) -> None:
-        """Lint keys that select, ignore or fix rules outside the register are rejected."""
-        for key in build_config.BANNED_LINT_KEYS:
-            with self.subTest(key=key):
-                settings = copy.deepcopy(SETTINGS)
-                settings["lint"][key] = ["unused-import"]
-                errors = self.errors_for(settings)
-                self.assertTrue(any(f"lint.{key}" in e and "not allowed" in e for e in errors), errors)
-
-    def test_extend_and_ignore_are_banned(self) -> None:
-        """The two overrides shown to disable a block rule are on the banned lists."""
-        self.assertIn("extend", build_config.BANNED_TOP_LEVEL_KEYS)
-        self.assertIn("ignore", build_config.BANNED_LINT_KEYS)
+    def test_unknown_key_is_reported(self) -> None:
+        """A key outside the allowlist fails even when it is not a known bypass."""
+        settings = copy.deepcopy(SETTINGS)
+        settings["lint"]["future-ruff-option"] = True
+        errors = self.errors_for(settings)
+        self.assertTrue(any("lint.future-ruff-option" in e and "not allowed" in e for e in errors), errors)
 
     def test_per_file_ignores_must_use_known_rule_names(self) -> None:
         """Codes, prefixes, ALL and unknown names cannot be per-file ignored."""
