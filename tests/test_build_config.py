@@ -40,7 +40,7 @@ SETTINGS = {
     "line-length": 120,
     "target-version": "py312",
     "preview": True,
-    "lint": {"pylint": {"max-args": 5}, "per-file-ignores": {"tests/**": ["assert"]}},
+    "lint": {"pylint": {"max-args": 5}, "per-file-ignores": {"tests/**": ["line-too-long"]}},
     "format": {"quote-style": "double"},
 }
 
@@ -111,6 +111,71 @@ class ValidateRegisterTest(unittest.TestCase):
         self.assertTrue(any("F401" in e and "name" in e for e in errors), errors)
 
 
+class ValidateSettingsTest(unittest.TestCase):
+    """validate_settings rejects settings that would override the register's rule decisions."""
+
+    def errors_for(self, settings: dict) -> list[str]:
+        """Return the settings errors against the sample register and catalog.
+
+        Returns:
+            The problems validate_settings reports.
+        """
+        return build_config.validate_settings(settings, make_rules(), CATALOG)
+
+    def with_ignores(self, selectors: list[str]) -> dict:
+        """Return SETTINGS with the given per-file-ignores selectors for every file.
+
+        Returns:
+            A modified copy of SETTINGS.
+        """
+        settings = copy.deepcopy(SETTINGS)
+        settings["lint"]["per-file-ignores"] = {"**": selectors}
+        return settings
+
+    def test_valid_settings_have_no_errors(self) -> None:
+        """Settings that only tune rules validate cleanly."""
+        self.assertEqual(self.errors_for(SETTINGS), [])
+
+    def test_top_level_selection_keys_are_reported(self) -> None:
+        """Top-level keys that extend another config or change the file set are rejected."""
+        for key in build_config.BANNED_TOP_LEVEL_KEYS:
+            with self.subTest(key=key):
+                settings = copy.deepcopy(SETTINGS)
+                settings[key] = ["src"]
+                errors = self.errors_for(settings)
+                self.assertTrue(any(key in e and "not allowed" in e for e in errors), errors)
+
+    def test_lint_selection_keys_are_reported(self) -> None:
+        """Lint keys that select, ignore or fix rules outside the register are rejected."""
+        for key in build_config.BANNED_LINT_KEYS:
+            with self.subTest(key=key):
+                settings = copy.deepcopy(SETTINGS)
+                settings["lint"][key] = ["unused-import"]
+                errors = self.errors_for(settings)
+                self.assertTrue(any(f"lint.{key}" in e and "not allowed" in e for e in errors), errors)
+
+    def test_extend_and_ignore_are_banned(self) -> None:
+        """The two overrides shown to disable a block rule are on the banned lists."""
+        self.assertIn("extend", build_config.BANNED_TOP_LEVEL_KEYS)
+        self.assertIn("ignore", build_config.BANNED_LINT_KEYS)
+
+    def test_per_file_ignores_must_use_known_rule_names(self) -> None:
+        """Codes, prefixes, ALL and unknown names cannot be per-file ignored."""
+        for selector in ("E501", "S", "ALL", "made-up-rule"):
+            with self.subTest(selector=selector):
+                errors = self.errors_for(self.with_ignores([selector]))
+                self.assertTrue(any(repr(selector) in e and "rule name" in e for e in errors), errors)
+
+    def test_per_file_ignores_cannot_name_block_rules(self) -> None:
+        """A block rule must fire everywhere, so per-file-ignores cannot name one."""
+        errors = self.errors_for(self.with_ignores(["unused-import"]))
+        self.assertTrue(any("unused-import" in e and "block" in e for e in errors), errors)
+
+    def test_per_file_ignores_may_name_warn_and_off_rules(self) -> None:
+        """Warn and off rules may be ignored per file."""
+        self.assertEqual(self.errors_for(self.with_ignores(["line-too-long", "bad-quotes-inline-string"])), [])
+
+
 class RenderConfigTest(unittest.TestCase):
     """render_block_config and render_warn_config place each rule in the right file."""
 
@@ -143,7 +208,7 @@ class RenderConfigTest(unittest.TestCase):
         self.assertEqual(self.block["line-length"], 120)
         self.assertIs(self.block["preview"], True)
         self.assertEqual(self.block["lint"]["pylint"]["max-args"], 5)
-        self.assertEqual(self.block["lint"]["per-file-ignores"], {"tests/**": ["assert"]})
+        self.assertEqual(self.block["lint"]["per-file-ignores"], {"tests/**": ["line-too-long"]})
         self.assertEqual(self.block["format"]["quote-style"], "double")
 
     def test_generated_header_present(self) -> None:
@@ -208,6 +273,15 @@ class CheckModeTest(unittest.TestCase):
         """An undecided rule fails the build and writes nothing."""
         partial = [r for r in make_rules() if r["code"] != "E501"]
         register = build_config.render_register(SETTINGS, partial)
+        (self.tmp / "rules" / "register.toml").write_text(register, encoding="utf-8")
+        self.assertEqual(self.run_main(), 1)
+        self.assertFalse((self.tmp / "ruff.toml").exists())
+
+    def test_overriding_settings_fail_without_writing(self) -> None:
+        """Settings that ignore a block rule fail the build and write nothing."""
+        settings = copy.deepcopy(SETTINGS)
+        settings["lint"]["ignore"] = ["unused-import"]
+        register = build_config.render_register(settings, make_rules())
         (self.tmp / "rules" / "register.toml").write_text(register, encoding="utf-8")
         self.assertEqual(self.run_main(), 1)
         self.assertFalse((self.tmp / "ruff.toml").exists())
